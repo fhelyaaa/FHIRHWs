@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOINC Data Display</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <h3>Enter Name:</h3>
+    <input type="text" id="nameValue" placeholder="Enter new name"><br><br>
+    <h3>Enter ID:</h3>
+    <input type="text" id="idValue" placeholder="Enter new id"><br><br>
+    
+    <h2>Select Display Option</h2>
+    <form id="displayForm">
+        <input type="radio" id="meanHeartRate" name="displayOption" value="55425-3">
+        <label for="meanHeartRate">Mean heart rate</label><br>
+        <input type="radio" id="CaloriesRate" name="displayOption" value="55424-6">
+        <label for="CaloriesRate">Calories per activity</label><br>
+    </form>
+
+    <h3>Enter Value:</h3>
+    <input type="text" id="retValue" placeholder="Enter new value"><br><br>
+    
+    <button onclick="submitData()">Submit</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js">
+    
+        function submitData() {
+            // Get selected radio button value
+            let displayOption = document.querySelector('input[name="displayOption"]:checked');
+            let displayText = displayOption ? displayOption.value : "No option selected";
+
+            // Get input text value
+            let nameValue = document.getElementById('nameValue').value;
+            let idValue = document.getElementById('idValue').value;
+            let retValue = document.getElementById('retValue').value;
+
+            // Show alert with the final result
+            alert(`Hi ${nameValue}!\nYour ID is: ${idValue}\nSelected LOINC: ${displayText}, Value: ${retValue}`);
+
+            // Create CSV content
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Name,ID,LOINC,Value\n"; // CSV header
+            csvContent += `${nameValue},${idValue},${displayText},${retValue}\n`;
+
+            // Convert CSV content to Blob
+            let blob = new Blob([csvContent], { type: "text/csv" });
+
+            // Use FileSaver.js to save the file
+            saveAs(blob, "FHIR-HW9CSV.csv");
+        }
+    </script>
+</body>
+</html>

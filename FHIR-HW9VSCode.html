@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LOINC Data Display</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
     <h3>Enter Name:</h3>
@@ -25,31 +24,58 @@
     
     <button onclick="submitData()">Submit</button>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js">
-    
-        function submitData() {
-            // Get selected radio button value
-            let displayOption = document.querySelector('input[name="displayOption"]:checked');
-            let displayText = displayOption ? displayOption.value : "No option selected";
+    <script>
+        async function submitData() {
+            const GITHUB_REPO = 'fhelyaaa/testt';
+            const GITHUB_FILE_PATH = 'FHIR-HW9CSV.csv';
+            const GITHUB_TOKEN = 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN';  // Replace with your token
 
-            // Get input text value
             let nameValue = document.getElementById('nameValue').value;
             let idValue = document.getElementById('idValue').value;
+            let displayOption = document.querySelector('input[name="displayOption"]:checked');
+            let displayText = displayOption ? displayOption.value : "No option selected";
             let retValue = document.getElementById('retValue').value;
 
             // Show alert with the final result
             alert(`Hi ${nameValue}!\nYour ID is: ${idValue}\nSelected LOINC: ${displayText}, Value: ${retValue}`);
 
-            // Create CSV content
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Name,ID,LOINC,Value\n"; // CSV header
-            csvContent += `${nameValue},${idValue},${displayText},${retValue}\n`;
+            const newLine = `${nameValue},${idValue},${displayText},${retValue}\n`;
 
-            // Convert CSV content to Blob
-            let blob = new Blob([csvContent], { type: "text/csv" });
+            try {
+                // Get the current content of the file
+                let response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
+                    headers: {
+                        Authorization: `token ${GITHUB_TOKEN}`,
+                        Accept: 'application/vnd.github.v3.raw'
+                    }
+                });
 
-            // Use FileSaver.js to save the file
-            saveAs(blob, "FHIR-HW9CSV.csv");
+                if (!response.ok) throw new Error('Failed to fetch the file from GitHub');
+
+                let fileContent = await response.text();
+                let updatedContent = fileContent + newLine;
+                let base64Content = btoa(updatedContent);
+
+                // Update the file on GitHub
+                response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
+                    method: 'PUT',
+                    headers: {
+                        Authorization: `token ${GITHUB_TOKEN}`,
+                        Accept: 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({
+                        message: 'Add new data from form submission',
+                        content: base64Content,
+                        sha: response.headers.get('etag').replace(/"/g, '')
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to update the file on GitHub');
+
+                console.log('Success:', await response.json());
+            } catch (error) {
+                console.error('Error:', error);
+            }
         }
     </script>
 </body>

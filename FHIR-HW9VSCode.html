@@ -26,20 +26,22 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const csvUrl = 'https://raw.githubusercontent.com/fhelyaaa/testt/main/FHIR-HW9CSV.csv';
-            const GITHUB_REPO = 'fhelyaaa/testt';
+            const GITHUB_REPO = 'YOUR_USERNAME/YOUR_REPOSITORY'; // Replace with your GitHub username and repository name
             const GITHUB_FILE_PATH = 'FHIR-HW9CSV.csv';
             const GITHUB_TOKEN = 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN';  // Replace with your token
 
+            // Function to fetch and parse the CSV
             fetch(csvUrl)
                 .then(response => response.text())
                 .then(csvText => {
                     const data = Papa.parse(csvText, { header: true });
-                    console.log(data);  // You can use this to display the CSV in a table if needed
+                    console.log(data);  // Log parsed CSV data
                 });
 
-            async function submitData() {
+            // Make submitData function accessible globally
+            window.submitData = async function() {
                 let nameValue = document.getElementById('nameValue').value;
                 let idValue = document.getElementById('idValue').value;
                 let displayOption = document.querySelector('input[name="displayOption"]:checked');
@@ -99,7 +101,7 @@
                 } catch (error) {
                     console.error('Error:', error);
                 }
-            }
+            };
         });
     </script>
 </body>

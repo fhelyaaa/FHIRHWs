@@ -24,59 +24,83 @@
     
     <button onclick="submitData()">Submit</button>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script>
-        async function submitData() {
+        document.addEventListener('DOMContentLoaded', function () {
+            const csvUrl = 'https://raw.githubusercontent.com/fhelyaaa/testt/main/FHIR-HW9CSV.csv';
             const GITHUB_REPO = 'fhelyaaa/testt';
             const GITHUB_FILE_PATH = 'FHIR-HW9CSV.csv';
             const GITHUB_TOKEN = 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN';  // Replace with your token
 
-            let nameValue = document.getElementById('nameValue').value;
-            let idValue = document.getElementById('idValue').value;
-            let displayOption = document.querySelector('input[name="displayOption"]:checked');
-            let displayText = displayOption ? displayOption.value : "No option selected";
-            let retValue = document.getElementById('retValue').value;
-
-            // Show alert with the final result
-            alert(`Hi ${nameValue}!\nYour ID is: ${idValue}\nSelected LOINC: ${displayText}, Value: ${retValue}`);
-
-            const newLine = `${nameValue},${idValue},${displayText},${retValue}\n`;
-
-            try {
-                // Get the current content of the file
-                let response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
-                    headers: {
-                        Authorization: `token ${GITHUB_TOKEN}`,
-                        Accept: 'application/vnd.github.v3.raw'
-                    }
+            fetch(csvUrl)
+                .then(response => response.text())
+                .then(csvText => {
+                    const data = Papa.parse(csvText, { header: true });
+                    console.log(data);  // You can use this to display the CSV in a table if needed
                 });
 
-                if (!response.ok) throw new Error('Failed to fetch the file from GitHub');
+            async function submitData() {
+                let nameValue = document.getElementById('nameValue').value;
+                let idValue = document.getElementById('idValue').value;
+                let displayOption = document.querySelector('input[name="displayOption"]:checked');
+                let displayText = displayOption ? displayOption.value : "No option selected";
+                let retValue = document.getElementById('retValue').value;
 
-                let fileContent = await response.text();
-                let updatedContent = fileContent + newLine;
-                let base64Content = btoa(updatedContent);
+                // Show alert with the final result
+                alert(`Hi ${nameValue}!\nYour ID is: ${idValue}\nSelected LOINC: ${displayText}, Value: ${retValue}`);
 
-                // Update the file on GitHub
-                response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
-                    method: 'PUT',
-                    headers: {
-                        Authorization: `token ${GITHUB_TOKEN}`,
-                        Accept: 'application/vnd.github.v3+json'
-                    },
-                    body: JSON.stringify({
-                        message: 'Add new data from form submission',
-                        content: base64Content,
-                        sha: response.headers.get('etag').replace(/"/g, '')
-                    })
-                });
+                const newLine = `${nameValue},${idValue},${displayText},${retValue}\n`;
 
-                if (!response.ok) throw new Error('Failed to update the file on GitHub');
+                try {
+                    // Get the current content of the file
+                    let response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
+                        headers: {
+                            Authorization: `token ${GITHUB_TOKEN}`,
+                            Accept: 'application/vnd.github.v3.raw'
+                        }
+                    });
 
-                console.log('Success:', await response.json());
-            } catch (error) {
-                console.error('Error:', error);
+                    if (!response.ok) throw new Error('Failed to fetch the file from GitHub');
+
+                    let fileContent = await response.text();
+                    let updatedContent = fileContent + newLine;
+                    let base64Content = btoa(updatedContent);
+
+                    // Get the sha value from the initial response
+                    response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
+                        headers: {
+                            Authorization: `token ${GITHUB_TOKEN}`,
+                            Accept: 'application/vnd.github.v3+json'
+                        }
+                    });
+
+                    if (!response.ok) throw new Error('Failed to fetch the file from GitHub');
+
+                    const fileData = await response.json();
+                    const sha = fileData.sha;
+
+                    // Update the file on GitHub
+                    response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
+                        method: 'PUT',
+                        headers: {
+                            Authorization: `token ${GITHUB_TOKEN}`,
+                            Accept: 'application/vnd.github.v3+json'
+                        },
+                        body: JSON.stringify({
+                            message: 'Add new data from form submission',
+                            content: base64Content,
+                            sha: sha
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('Failed to update the file on GitHub');
+
+                    console.log('Success:', await response.json());
+                } catch (error) {
+                    console.error('Error:', error);
+                }
             }
-        }
+        });
     </script>
 </body>
 </html>
